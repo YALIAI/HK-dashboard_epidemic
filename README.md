@@ -41,6 +41,13 @@ pip install flask pandas openpyxl matplotlib
 ```
 
 ## How to Run
+   ```bash
+   python plot_epidemic_curves.py
+   ```
+The images will be saved in the current path
+<img src="活跃病例数据统计.png" alt="演示图片" width="800"/>
+<img src="香港各地区累计确诊病例对比.png" alt="演示图片" width="800"/>
+<img src="各地区确诊病例对比图.png" alt="演示图片" width="800"/>
 
 1. **Start the backend service**
 
@@ -48,7 +55,7 @@ pip install flask pandas openpyxl matplotlib
    python bigscreen_app.py
    ```
    Default port is `5002`. Open your browser and visit [http://localhost:5002](http://localhost:5002).
-
+<img src="dashboard.jpg" alt="演示图片" width="800"/>
 2. **View the dashboard**
 
    Open your browser and go to `http://localhost:5002` to see the real-time dashboard.
