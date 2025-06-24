@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>香港疫情大屏可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        body { background: #111; color: #fff; margin: 0; font-family: 'Microsoft YaHei', Arial, sans-serif; }
+        .container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        .row { display: flex; flex: 1; }
+        .chart-box { flex: 1; margin: 20px; background: #222; border-radius: 16px; box-shadow: 0 0 16px #0008; padding: 16px; }
+        h2 { text-align: center; margin: 0 0 16px 0; font-size: 2.2vw; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="width:100%;text-align:right;padding:8px 24px 0 0;font-size:1.1vw;color:#81c784;">
+        <span id="update-time">上次更新时间：</span>
+    </div>
+    <div class="row" style="flex:2">
+        <div class="chart-box">
+            <h2>每日新增与累计确诊</h2>
+            <div id="daily" style="width:100%;height:100%;min-height:350px;"></div>
+        </div>
+        <div class="chart-box">
+            <h2>活跃病例趋势</h2>
+            <div id="active" style="width:100%;height:100%;min-height:350px;"></div>
+        </div>
+    </div>
+    <div class="row" style="flex:1.2">
+        <div class="chart-box" style="width:100%">
+            <h2>各地区累计确诊对比</h2>
+            <div id="region" style="width:100%;height:100%;min-height:350px;"></div>
+        </div>
+    </div>
+    <div class="row" style="flex:1.5">
+        <div class="chart-box" style="flex:1">
+            <h2>地区风险等级分布</h2>
+            <div id="risk" style="width:100%;height:100%;min-height:300px;"></div>
+        </div>
+        <div class="chart-box" style="flex:2">
+            <h2>香港各区疫情地图</h2>
+            <div id="hk-map" style="width:100%;height:100%;min-height:500px;"></div>
+        </div>
+    </div>
+</div>
+<script>
+let timer = null;
+function setUpdateTime() {
+    const now = new Date();
+    document.getElementById('update-time').innerText = '上次更新时间：' + now.toLocaleString();
+}
+function loadAllCharts() {
+    fetch('/api/daily').then(r=>r.json()).then(daily=>{
+        let dailyChart = echarts.init(document.getElementById('daily'));
+        dailyChart.setOption({
+            tooltip: { trigger: 'axis' },
+            legend: { data: ['每日新增', '7日移动平均', '累计确诊'], textStyle:{color:'#fff'} },
+            xAxis: { type: 'category', data: daily.dates, axisLabel:{color:'#fff',rotate:45} },
+            yAxis: [
+                { type: 'value', name: '每日新增', axisLabel:{color:'#fff'} },
+                { type: 'value', name: '累计确诊', axisLabel:{color:'#fff'} }
+            ],
+            series: [
+                { name: '每日新增', type: 'bar', data: daily['新增确诊'], yAxisIndex:0, color:'#4fc3f7' },
+                { name: '7日移动平均', type: 'line', data: daily['7日移动平均_新增确诊'], yAxisIndex:0, color:'#81c784', smooth:true },
+                { name: '累计确诊', type: 'line', data: daily['累计确诊'], yAxisIndex:1, color:'#e57373', smooth:true }
+            ]
+        });
+        let activeChart = echarts.init(document.getElementById('active'));
+        activeChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: daily.dates, axisLabel:{color:'#fff',rotate:45} },
+            yAxis: { type: 'value', name: '活跃病例', axisLabel:{color:'#fff'} },
+            series: [
+                { name: '活跃病例', type: 'line', data: daily['活跃病例'], color:'#ffb74d', smooth:true, areaStyle:{} }
+            ]
+        });
+        fetch('/api/region').then(r=>r.json()).then(region=>{
+            let regionChart = echarts.init(document.getElementById('region'));
+            regionChart.setOption({
+                tooltip: { trigger: 'axis' },
+                yAxis: { type: 'category', data: region['地区名称'], axisLabel:{color:'#fff'} },
+                xAxis: { type: 'value', axisLabel:{color:'#fff'} },
+                series: [
+                    { name: '累计确诊', type: 'bar', data: region['累计确诊'], color:'#4fc3f7', label:{show:true,position:'right',color:'#fff'} }
+                ]
+            });
+            fetch('/api/risk').then(r=>r.json()).then(risk=>{
+                let riskChart = echarts.init(document.getElementById('risk'));
+                riskChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { orient: 'vertical', left: 'left', textStyle:{color:'#fff'} },
+                    series: [
+                        {
+                            name: '地区数量',
+                            type: 'pie',
+                            radius: '60%',
+                            data: risk['风险等级'].map((name, i) => ({ value: risk['地区数量'][i], name })),
+                            label: { color: '#fff', fontSize: 16 }
+                        }
+                    ]
+                });
+                fetch('https://cdn.jsdelivr.net/gh/apache/echarts-website@asf-site/examples/data/asset/geo/HK.json')
+                    .then(r=>r.json())
+                    .then(hkGeoJson=>{
+                        echarts.registerMap('hongkong', hkGeoJson);
+                        fetch('/api/map').then(r=>r.json()).then(mapData=>{
+                            let hkMap = echarts.init(document.getElementById('hk-map'));
+                            const nameMap = {
+                                'Central and Western': '中西区',
+                                'Wan Chai': '湾仔区',
+                                'Eastern': '东区',
+                                'Southern': '南区',
+                                'Yau Tsim Mong': '油尖旺区',
+                                'Sham Shui Po': '深水埗区',
+                                'Kowloon City': '九龙城区',
+                                'Wong Tai Sin': '黄大仙区',
+                                'Kwun Tong': '观塘区',
+                                'Kwai Tsing': '葵青区',
+                                'Tsuen Wan': '荃湾区',
+                                'Tuen Mun': '屯门区',
+                                'Yuen Long': '元朗区',
+                                'North': '北区',
+                                'Tai Po': '大埔区',
+                                'Sha Tin': '沙田区',
+                                'Sai Kung': '西贡区',
+                                'Islands': '离岛区'
+                            };
+                            const zh2en = Object.fromEntries(Object.entries(nameMap).map(([en, zh])=>[zh, en]));
+                            let data = mapData['地区名称'].map((zh,i)=>({
+                                name: zh2en[zh]||zh,
+                                value: mapData['累计确诊'][i],
+                                risk: mapData['风险等级'][i],
+                                labelName: zh
+                            }));
+                            let max = Math.max(...data.map(d=>d.value));
+                            hkMap.setOption({
+                                backgroundColor: '#0f1c3a',
+                                tooltip: { trigger: 'item', formatter: p=>`${p.data?.labelName||p.name}: ${p.value||0}例<br>风险等级: ${p.data?.risk||''}` },
+                                visualMap: {
+                                    min: 0, max: max, text: ['高','低'],
+                                    inRange: { color: ['#2ecc71','#e67e22','#c23531'] },
+                                    textStyle: { color:'#fff' }
+                                },
+                                series: [{
+                                    name: '香港疫情地图',
+                                    type: 'map',
+                                    map: 'hongkong',
+                                    roam: true,
+                                    label: {
+                                        show: true,
+                                        color: '#fff',
+                                        fontSize: 12,
+                                        formatter: function(params) {
+                                            return params.data ? `${params.data.labelName}\n${params.data.value}例` : params.name;
+                                        }
+                                    },
+                                    emphasis: { label: { show: true, color: '#fff', fontSize: 14, fontWeight: 'bold' } },
+                                    data
+                                }]
+                            });
+                            window.addEventListener('resize', ()=>hkMap.resize());
+                            setUpdateTime();
+                        });
+                    });
+            });
+        });
+    });
+}
+// 首次加载
+loadAllCharts();
+// 定时刷新
+if(timer) clearInterval(timer);
+timer = setInterval(loadAllCharts, 30000);
+</script>
+</body>
+</html> 
