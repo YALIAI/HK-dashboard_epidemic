@@ -47,7 +47,7 @@ pip install flask pandas openpyxl matplotlib
 The images will be saved in the current path
 <img src="活跃病例数据统计图.png" alt="演示图片" width="800"/>
 
-<img src="各地区确诊病例对比图.png" alt="演示图片" width="800"/>
+<img src="每日确诊数据统计图.png" alt="演示图片" width="800"/>
 
 <img src="各地区确诊病例对比图.png" alt="演示图片" width="800"/>
 
