@@ -14,7 +14,7 @@ This project is a real-time COVID-19 monitoring dashboard for Hong Kong, built w
 ## Project Structure
 
 ```
-CASE-dashboard_epidemic/
+HK-dashboard_epidemic/
 ├── bigscreen_app.py              # Main Flask backend providing data APIs
 ├── plot_epidemic_curves.py       # Script for generating static epidemic trend images
 ├── 香港各区疫情数据_20250322.xlsx # Core data source (Excel)
@@ -41,6 +41,10 @@ pip install flask pandas openpyxl matplotlib
 ```
 
 ## How to Run
+Plot curves:
+
+<img src="活跃病例数据统计图.png" alt="演示图片" width="400"/>
+
 
 1. **Start the backend service**
 
