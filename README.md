@@ -43,7 +43,7 @@ pip install flask pandas openpyxl matplotlib
 ## How to Run
 Plot curves:
 
-<img src="活跃病例数据统计图.png" alt="演示图片" width="400"/>
+<img src="活跃病例数据统计图.png" alt="演示图片" width="800"/>
 
 
 1. **Start the backend service**
