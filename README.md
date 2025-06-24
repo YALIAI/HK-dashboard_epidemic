@@ -45,9 +45,9 @@ pip install flask pandas openpyxl matplotlib
    python plot_epidemic_curves.py
    ```
 The images will be saved in the current path
-<img src="活跃病例数据统计.png" alt="演示图片" width="800"/>
+<img src="活跃病例数据统计图.png" alt="演示图片" width="800"/>
 
-<img src="香港各地区累计确诊病例对比.png" alt="演示图片" width="800"/>
+<img src="各地区确诊病例对比图.png" alt="演示图片" width="800"/>
 
 <img src="各地区确诊病例对比图.png" alt="演示图片" width="800"/>
 
